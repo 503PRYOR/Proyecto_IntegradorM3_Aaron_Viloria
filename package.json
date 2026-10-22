@@ -1,0 +1,15 @@
+{
+  "name": "tesla-chat",
+  "version": "1.0.0",
+  "description": "SPA para chatear con Nikola Tesla usando Gemini y Vercel Serverless Functions",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx serve -s src",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

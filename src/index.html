@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Conversa con Nikola Tesla, impulsado por Gemini." />
+  <title>Tesla Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Young+Serif&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="/styles.css" />
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/home" data-link>Bienvenido.</a>
+    <nav aria-label="Principal">
+      <a href="/home" data-link>Inicio</a>
+      <a href="/chat" data-link>Chat</a>
+      <a href="/about" data-link>Acerca de</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view view--home" data-view="home" hidden>
+      <img src="/tesla.jpg" alt="Retrato de Nikola Tesla" class="hero__portrait" />
+      <h1>Conversa con Nikola Tesla</h1>
+      <p>
+        Pregúntale sobre la electricidad, sus inventos o el futuro.
+        Cuéntale el tuyo.
+      </p>
+      <a class="button" href="/chat" data-link>Iniciar conversación</a>
+    </section>
+
+    <!-- CHAT -->
+    <section class="view view--chat" data-view="chat" hidden>
+      <ul id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversación"></ul>
+
+      <p id="typing" class="typing" hidden>
+        Tesla está escribiendo<span class="typing__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </p>
+
+      <div id="chat-error" class="chat-error" role="alert" hidden>
+        <span id="chat-error-text"></span>
+        <button id="retry-btn" type="button">Reintentar</button>
+      </div>
+
+      <form id="chat-form" class="composer" autocomplete="off">
+        <label for="chat-input" class="sr-only">Tu mensaje</label>
+        <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Escribe tu mensaje"></textarea>
+        <button id="send-btn" class="button" type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="view view--about" data-view="about" hidden>
+      <h1>Acerca de</h1>
+      <p>
+        Tesla Chat es una Single Page Application para conversar con Nikola Tesla.
+        Las respuestas las genera Google Gemini a través de una Vercel Serverless Function,
+        de modo que la API key nunca llega al navegador.
+      </p>
+      <p>
+        La conversación se guarda solo mientras la página siga abierta: si recargas,
+        Tesla olvida todo.
+      </p>
+      <h2>Tecnologías</h2>
+      <p>HTML, CSS (mobile-first), JavaScript modular, History API, Gemini API, Vercel y Vitest.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>Proyecto Integrador M3 · Henry</small>
+  </footer>
+</body>
+</html>
