@@ -2,36 +2,70 @@ import { formatTime } from './utils.js';
 
 const GREETING =
   'Pase, pase. Veo que viene con prisa y con una pregunta. Hable, y sea breve: el tiempo es un recurso escaso.';
+const MAX_TRANSIENT_RETRIES = 1;
+const RETRY_DELAY_MS = 500;
 
-/** Llama a la serverless function. Lanza Error si algo falla. */
-export async function requestReply(messages, fetchFn = fetch) {
-  const response = await fetchFn('/api/functions', {
+/**
+ * Llama a la serverless function y lee la respuesta en streaming.
+ * onToken(chunk, textoAcumulado) se invoca por cada fragmento.
+ * Devuelve el texto completo. Lanza Error si no llegó nada utilizable.
+ */
+export async function requestReply(messages, fetchFn = fetch, onToken = () => {}) {
+  const request = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: messages.map(({ role, text }) => ({ role, text })) }),
-  });
+  };
+  let response;
 
-  let data = null;
-  let jsonError = null;
-  try {
-    data = await response.json();
-  } catch (error) {
-    jsonError = error;
+  for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt += 1) {
+    response = await fetchFn('/api/functions', request);
+    if (response.status !== 503 || attempt === MAX_TRANSIENT_RETRIES) break;
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
   }
 
+  // Errores: el servidor los envía como JSON { error }
   if (!response.ok) {
+    const data = await response.json().catch(() => null);
     throw new Error(data?.error || `Error del servidor (${response.status}).`);
   }
-  if (typeof data?.error === 'string' && data.error.trim()) {
-    throw new Error(data.error);
+
+  // Respuesta en streaming (texto plano)
+  if (response.body?.getReader) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (!chunk) continue;
+        full += chunk;
+        onToken(chunk, full);
+      }
+    } catch (error) {
+      // Si se cortó a mitad pero ya había texto, conservamos lo recibido
+      if (!full.trim()) throw error;
+    }
+    if (!full.trim()) throw new Error('El personaje no devolvió respuesta. Intenta de nuevo.');
+    return full;
   }
-  if (jsonError) {
-    throw new Error(`El servidor respondió con HTTP ${response.status}, pero no devolvió JSON válido.`);
+
+  // Respaldo (por ejemplo, en pruebas): JSON { reply } o texto plano
+  const raw = await response.text();
+  try {
+    const data = JSON.parse(raw);
+    if (typeof data?.reply === 'string' && data.reply.trim()) {
+      onToken(data.reply, data.reply);
+      return data.reply;
+    }
+  } catch {
+    /* no era JSON: se trata como texto */
   }
-  if (typeof data?.reply !== 'string' || !data.reply.trim()) {
-    throw new Error(`Respuesta inesperada del servidor (HTTP ${response.status}): falta un campo "reply" con texto.`);
-  }
-  return data.reply;
+  if (!raw.trim()) throw new Error('El personaje no devolvió respuesta. Intenta de nuevo.');
+  onToken(raw, raw);
+  return raw;
 }
 
 export function initChat() {
@@ -48,19 +82,12 @@ export function initChat() {
   const messages = [];
   let loading = false;
 
-  function addMessage(role, text) {
-    const message = { role, text, time: formatTime() };
-    messages.push(message);
-    renderMessage(message);
-  }
-
-  function renderMessage({ role, text, time }) {
+  function buildMessageElement(role, time) {
     const item = document.createElement('li');
     item.className = `msg msg--${role}`;
 
     const bubble = document.createElement('p');
     bubble.className = 'msg__text';
-    bubble.textContent = text; // textContent evita inyección de HTML
 
     const stamp = document.createElement('span');
     stamp.className = 'msg__time';
@@ -68,6 +95,14 @@ export function initChat() {
 
     item.append(bubble, stamp);
     list.append(item);
+    return bubble;
+  }
+
+  function addMessage(role, text) {
+    const message = { role, text, time: formatTime() };
+    messages.push(message);
+    const bubble = buildMessageElement(role, message.time);
+    bubble.textContent = text; // textContent evita inyección de HTML
     scrollToBottom();
   }
 
@@ -96,11 +131,32 @@ export function initChat() {
   async function askCharacter() {
     hideError();
     setLoading(true);
+
+    let bubble = null;
+    let time = null;
+    let partial = '';
+
     try {
-      const reply = await requestReply(messages);
-      addMessage('character', reply);
+      const reply = await requestReply(messages, fetch, (_chunk, full) => {
+        partial = full;
+        if (!bubble) {
+          // Primer fragmento: ocultamos "escribiendo..." y creamos la burbuja
+          typing.hidden = true;
+          time = formatTime();
+          bubble = buildMessageElement('character', time);
+        }
+        bubble.textContent = full;
+        scrollToBottom();
+      });
+      messages.push({ role: 'character', text: reply, time: time ?? formatTime() });
+      if (!bubble) addMessage('character', reply);
     } catch (error) {
-      showError(error.message || 'No se pudo conectar. Revisa tu conexión.');
+      if (bubble && partial.trim()) {
+        // Se cortó a mitad: conservamos lo que llegó, sin mostrar error
+        messages.push({ role: 'character', text: partial, time });
+      } else {
+        showError(error.message || 'No se pudo conectar. Revisa tu conexión.');
+      }
     } finally {
       setLoading(false);
     }

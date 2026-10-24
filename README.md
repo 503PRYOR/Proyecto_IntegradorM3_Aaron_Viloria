@@ -2,15 +2,17 @@
 
 Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsada por **Google Gemini**. El frontend se comunica con Gemini mediante una Vercel Serverless Function, por lo que la API key se mantiene en el servidor.
 
-- **Demo en producción:** agrega aquí la URL pública de Vercel.
-- **Capturas:** agrega capturas de las vistas en mobile, tablet y desktop.
+- **Demo en producción:** pendiente de agregar la URL pública de Vercel.
+- **Capturas:** pendientes de agregar capturas de las vistas en mobile, tablet y desktop.
 
 ## Funcionalidades
 
 - Navegación SPA con History API en `/home`, `/chat` y `/about`, incluyendo atrás/adelante.
 - Diseño mobile-first con Flexbox y breakpoints para tablet (768 px) y escritorio (1100 px).
-- Chat con historial durante la sesión, scroll automático, indicador de escritura, manejo de errores y reintento.
+- Chat con historial durante la sesión, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
+- Cada solicitud envía hasta los 10 mensajes más recientes como contexto.
 - System prompt de Nikola Tesla definido en el servidor.
+- Generación optimizada para respuestas breves; en modelos Gemini 3 se limita el nivel de razonamiento para reducir la latencia.
 - Validación del método y de los mensajes recibidos por la función serverless.
 - Tests unitarios con Vitest y mocking de `fetch`.
 
@@ -28,8 +30,9 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 │   ├── chat.js            # Interfaz y lógica del chat
 │   └── utils.js           # Utilidades compartidas con la API
 ├── tests/
-│   ├── app.test.js
-│   └── utils.test.js
+│   ├── api.test.js        # Handler serverless y streaming
+│   ├── app.test.js        # Lógica de respuesta del chat
+│   └── utils.test.js      # Rutas, validación y conversión a Gemini
 ├── .env.example
 ├── vercel.json
 └── package.json
@@ -65,7 +68,7 @@ Después, inicia el entorno local de Vercel:
 
 ```bash
 vercel login
-vercel dev
+npm start
 ```
 
 Abre la URL que indique Vercel, normalmente <http://localhost:3000>. `vercel dev` es necesario para que la ruta `/api/functions` llegue a la función serverless. Live Server o un servidor estático solo muestran el frontend y no ejecutan esa función.
@@ -87,8 +90,8 @@ npm run test:watch
 ## Despliegue en Vercel
 
 1. Importa el repositorio en Vercel y selecciona la carpeta `tesla-chat` como directorio raíz del proyecto, si el repositorio contiene otras carpetas.
-2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY`. Puedes configurar también `GEMINI_MODEL`; si no lo haces, la función usa `gemini-2.5-flash`. Si esa variable ya existe, su valor sobrescribe el predeterminado.
-3. Despliega el proyecto y prueba la página y el chat en la URL asignada.
+2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY` y `GEMINI_MODEL=gemini-3.5-flash` (o un identificador de modelo disponible para tu proyecto). Las variables de Vercel son independientes del archivo `.env` local.
+3. Crea un nuevo despliegue para aplicar los cambios de variables y código; luego prueba la página y el chat en la URL asignada.
 4. Sustituye el texto de **Demo en producción** al inicio de este README por esa URL.
 
 ## Seguridad
