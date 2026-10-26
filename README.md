@@ -2,7 +2,7 @@
 
 Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsada por **Google Gemini**. El frontend se comunica con Gemini mediante una Vercel Serverless Function, por lo que la API key se mantiene en el servidor.
 
-- **Demo en producción:** pendiente de agregar la URL pública de Vercel.
+- **Demo en producción:** <https://proyecto-integradorm3.vercel.app/home>
 - **Capturas:** pendientes de agregar capturas de las vistas en mobile, tablet y desktop.
 
 ## Funcionalidades
