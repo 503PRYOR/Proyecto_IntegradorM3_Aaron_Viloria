@@ -1,7 +1,29 @@
 import { describe, it, expect, vi } from 'vitest';
-import { requestReply } from '../src/chat.js';
+import { debounce, requestReply } from '../src/chat.js';
 
 const history = [{ role: 'user', text: 'Hola', time: '10:00' }];
+
+describe('debounce', () => {
+  it('ejecuta solo la última llamada después del intervalo', () => {
+    vi.useFakeTimers();
+    try {
+      const fn = vi.fn();
+      const debouncedFn = debounce(fn, 250);
+
+      debouncedFn('primera');
+      vi.advanceTimersByTime(100);
+      debouncedFn('última');
+      vi.advanceTimersByTime(249);
+      expect(fn).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(fn).toHaveBeenCalledWith('última');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
 
 function mockResponse({ ok = true, status = 200, body = {} } = {}) {
   return {
@@ -58,22 +80,13 @@ describe('requestReply (fetch mockeado)', () => {
     expect(received).toEqual([['Ele', 'Ele'], ['mental.', 'Elemental.']]);
   });
 
-  it('reintenta una vez cuando Gemini responde con 503', async () => {
-    vi.useFakeTimers();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(mockResponse({ ok: false, status: 503, body: { error: 'Saturado' } }))
-      .mockResolvedValueOnce(mockResponse({ body: { reply: 'Elemental.' } }));
+  it('no repite automáticamente una solicitud cuando el servidor responde 503', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockResponse({ ok: false, status: 503, body: { error: 'Saturado' } }),
+    );
 
-    try {
-      const replyPromise = requestReply(history, fetchMock);
-      await vi.advanceTimersByTimeAsync(500);
-
-      await expect(replyPromise).resolves.toBe('Elemental.');
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally {
-      vi.useRealTimers();
-    }
+    await expect(requestReply(history, fetchMock)).rejects.toThrow('Saturado');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('propaga errores de red', async () => {

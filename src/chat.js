@@ -2,8 +2,15 @@ import { formatTime } from './utils.js';
 
 const GREETING =
   'Pase, pase. Veo que viene con prisa y con una pregunta. Hable, y sea breve: el tiempo es un recurso escaso.';
-const MAX_TRANSIENT_RETRIES = 1;
-const RETRY_DELAY_MS = 500;
+const SEND_DEBOUNCE_MS = 250;
+
+export function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
 
 /**
  * Llama a la serverless function y lee la respuesta en streaming.
@@ -16,13 +23,7 @@ export async function requestReply(messages, fetchFn = fetch, onToken = () => {}
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: messages.map(({ role, text }) => ({ role, text })) }),
   };
-  let response;
-
-  for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt += 1) {
-    response = await fetchFn('/api/functions', request);
-    if (response.status !== 503 || attempt === MAX_TRANSIENT_RETRIES) break;
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-  }
+  const response = await fetchFn('/api/functions', request);
 
   // Errores: el servidor los envía como JSON { error }
   if (!response.ok) {
@@ -162,14 +163,19 @@ export function initChat() {
     }
   }
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
+  const sendMessage = debounce(() => {
     const text = input.value.trim();
     if (!text || loading) return;
     input.value = '';
     input.style.height = '';
     addMessage('user', text);
     askCharacter();
+  }, SEND_DEBOUNCE_MS);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!input.value.trim() || loading) return;
+    sendMessage();
   });
 
   // Enter envía; Shift+Enter hace salto de línea.
