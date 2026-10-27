@@ -50,7 +50,7 @@ function createGeminiStream(text) {
 describe('API handler', () => {
   beforeEach(async () => {
     vi.stubEnv('GEMINI_API_KEY', 'test-key');
-    vi.stubEnv('GEMINI_MODEL', 'gemini-3.5-flash');
+    vi.stubEnv('GEMINI_MODEL', 'gemini-3.8-flash');
     vi.stubEnv('GEMINI_MODELS', '');
     vi.stubGlobal(
       'fetch',
@@ -98,7 +98,24 @@ describe('API handler', () => {
 
     expect(res.body).toBe('Respuesta de respaldo');
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch.mock.calls[1][0]).toContain('gemini-2.5-flash-lite');
+    expect(fetch.mock.calls[1][0]).toContain('gemini-3.6-flash');
+  });
+
+  it('pasa a un modelo de respaldo si el principal está temporalmente ocupado', async () => {
+    fetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: { message: 'High demand' } }),
+      })
+      .mockResolvedValueOnce(createGeminiStream('Respuesta de respaldo'));
+    const res = createResponse();
+
+    await handler({ method: 'POST', body: { messages: [{ role: 'user', text: 'Hola' }] } }, res);
+
+    expect(res.body).toBe('Respuesta de respaldo');
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1][0]).toContain('gemini-3.6-flash');
   });
 
   it('explains when Gemini exhausted the quota without trying fallback models', async () => {

@@ -5,20 +5,16 @@ import { toGeminiContents, validateMessages } from '../src/utils.js';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-// Modelos del entorno + respaldos fijos (sin repetir).
-// Así, aunque GEMINI_MODEL tenga un solo modelo, siempre hay fallback.
-const FALLBACK_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+// Modelos del entorno + respaldos actuales (sin repetir).
+const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite'];
 const fromEnv = (process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || '')
   .split(',')
   .map((m) => m.trim())
   .filter(Boolean);
 const MODELS = [...new Set([...fromEnv, ...FALLBACK_MODELS])];
 
-// Solo 500/503/504 se reintentan en el MISMO modelo.
-// 429 (cuota agotada) salta directo al siguiente modelo.
-const RETRYABLE = [500, 503, 504];
 const BUSY = [429, 503];
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const MODEL_TIMEOUT_MS = 8000;
 
 function generationConfig(model) {
   return {
@@ -30,50 +26,44 @@ function generationConfig(model) {
   };
 }
 
-// Prueba cada modelo hasta que uno responda con éxito
+// Prueba cada modelo una vez para reservar tiempo para los respaldos.
 async function openStream(messages) {
   let lastStatus = 0;
   let sawBusy = false;
 
   for (const model of MODELS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const response = await fetch(`${BASE}/${model}:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: toGeminiContents(messages),
-            generationConfig: generationConfig(model),
-          }),
-          signal: AbortSignal.timeout(25000),
-        });
+    try {
+      const response = await fetch(`${BASE}/${model}:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: toGeminiContents(messages),
+          generationConfig: generationConfig(model),
+        }),
+        signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+      });
 
-        if (response.ok) return response;
+      if (response.ok) return response;
 
-        lastStatus = response.status;
-        if (BUSY.includes(response.status)) sawBusy = true;
-        const data = await response.json().catch(() => null);
-        const upstreamError = data?.error;
-        const errorDetails = `${upstreamError?.status || ''} ${upstreamError?.message || ''}`;
-        console.error(`Gemini ${model}:`, response.status, errorDetails);
-        if (response.status === 429 && /quota|billing|exceeded|resource_exhausted/i.test(errorDetails)) {
-          const quotaError = new Error('Gemini quota exceeded');
-          quotaError.status = 429;
-          quotaError.quota = true;
-          throw quotaError;
-        }
-
-        // 429, 400, 404...: reintentar este modelo no sirve, pasa al siguiente
-        if (!RETRYABLE.includes(response.status)) break;
-        await sleep(300 * (attempt + 1));
-      } catch (err) {
-        if (err.quota) throw err;
-        console.error(`Gemini ${model} falló:`, err.message);
-        await sleep(300);
+      lastStatus = response.status;
+      if (BUSY.includes(response.status)) sawBusy = true;
+      const data = await response.json().catch(() => null);
+      const upstreamError = data?.error;
+      const errorDetails = `${upstreamError?.status || ''} ${upstreamError?.message || ''}`;
+      console.error(`Gemini ${model}:`, response.status, errorDetails);
+      if (response.status === 429 && /quota|billing|exceeded|resource_exhausted/i.test(errorDetails)) {
+        const quotaError = new Error('Gemini quota exceeded');
+        quotaError.status = 429;
+        quotaError.quota = true;
+        throw quotaError;
       }
+    } catch (err) {
+      if (err.quota) throw err;
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') sawBusy = true;
+      console.error(`Gemini ${model} falló:`, err.message);
     }
   }
 

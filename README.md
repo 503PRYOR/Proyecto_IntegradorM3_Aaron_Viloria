@@ -90,7 +90,7 @@ npm run test:watch
 ## Despliegue en Vercel
 
 1. Importa el repositorio en Vercel y selecciona la carpeta `tesla-chat` como directorio raíz del proyecto, si el repositorio contiene otras carpetas.
-2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY` y `GEMINI_MODEL=gemini-3.5-flash` (o un identificador de modelo disponible para tu proyecto). Las variables de Vercel son independientes del archivo `.env` local.
+2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY` y `GEMINI_MODEL=gemini-3.6-flash` (o un identificador de modelo disponible para tu proyecto). Las variables de Vercel son independientes del archivo `.env` local.
 3. Crea un nuevo despliegue para aplicar los cambios de variables y código; luego prueba la página y el chat en la URL asignada.
 4. Sustituye el texto de **Demo en producción** al inicio de este README por esa URL.
 
