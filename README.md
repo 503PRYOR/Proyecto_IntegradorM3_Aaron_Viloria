@@ -12,7 +12,7 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 - Chat con historial durante la sesión, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
 - Cada solicitud envía hasta los 10 mensajes más recientes como contexto.
 - System prompt de Nikola Tesla definido en el servidor.
-- Generación optimizada para respuestas breves; en modelos Gemini 3 se limita el nivel de razonamiento para reducir la latencia.
+- Una llamada a `generateContent` por envío, con respuesta JSON completa y el modelo `gemini-3.5-flash-lite`; no hay reintentos ni modelos de respaldo automáticos.
 - Validación del método y de los mensajes recibidos por la función serverless.
 - Tests unitarios con Vitest y mocking de `fetch`.
 
@@ -30,7 +30,7 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 │   ├── chat.js            # Interfaz y lógica del chat
 │   └── utils.js           # Utilidades compartidas con la API
 ├── tests/
-│   ├── api.test.js        # Handler serverless y streaming
+│   ├── api.test.js        # Handler serverless y respuesta JSON de Gemini
 │   ├── app.test.js        # Lógica de respuesta del chat
 │   └── utils.test.js      # Rutas, validación y conversión a Gemini
 ├── .env.example
@@ -90,7 +90,7 @@ npm run test:watch
 ## Despliegue en Vercel
 
 1. Importa el repositorio en Vercel y selecciona la carpeta `tesla-chat` como directorio raíz del proyecto, si el repositorio contiene otras carpetas.
-2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY` y `GEMINI_MODEL=gemini-3.6-flash` (o un identificador de modelo disponible para tu proyecto). Las variables de Vercel son independientes del archivo `.env` local.
+2. En **Settings → Environment Variables**, configura `GEMINI_API_KEY`. El endpoint usa `gemini-3.5-flash-lite`; las variables de Vercel son independientes del archivo `.env` local.
 3. Crea un nuevo despliegue para aplicar los cambios de variables y código; luego prueba la página y el chat en la URL asignada.
 4. Sustituye el texto de **Demo en producción** al inicio de este README por esa URL.
 

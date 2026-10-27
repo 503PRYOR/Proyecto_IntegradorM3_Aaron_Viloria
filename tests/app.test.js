@@ -1,28 +1,53 @@
-import { describe, it, expect, vi } from 'vitest';
-import { debounce, requestReply } from '../src/chat.js';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { initChat, requestReply } from '../src/chat.js';
 
 const history = [{ role: 'user', text: 'Hola', time: '10:00' }];
 
-describe('debounce', () => {
-  it('ejecuta solo la última llamada después del intervalo', () => {
-    vi.useFakeTimers();
-    try {
-      const fn = vi.fn();
-      const debouncedFn = debounce(fn, 250);
+function createElement() {
+  const listeners = {};
+  return {
+    children: [],
+    disabled: false,
+    hidden: false,
+    scrollHeight: 0,
+    scrollTop: 0,
+    style: {},
+    textContent: '',
+    value: '',
+    addEventListener(type, callback) {
+      listeners[type] = callback;
+    },
+    append(...children) {
+      this.children.push(...children);
+    },
+    focus() {},
+    submit() {
+      listeners.submit({ preventDefault() {} });
+    },
+  };
+}
 
-      debouncedFn('primera');
-      vi.advanceTimersByTime(100);
-      debouncedFn('última');
-      vi.advanceTimersByTime(249);
-      expect(fn).not.toHaveBeenCalled();
+function createChatDocument() {
+  const elements = new Map([
+    ['messages', createElement()],
+    ['chat-form', createElement()],
+    ['chat-input', createElement()],
+    ['send-btn', createElement()],
+    ['typing', createElement()],
+    ['chat-error', createElement()],
+    ['chat-error-text', createElement()],
+    ['retry-btn', createElement()],
+  ]);
+  return {
+    elements,
+    getElementById: (id) => elements.get(id),
+    createElement,
+  };
+}
 
-      vi.advanceTimersByTime(1);
-      expect(fn).toHaveBeenCalledOnce();
-      expect(fn).toHaveBeenCalledWith('última');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function mockResponse({ ok = true, status = 200, body = {} } = {}) {
@@ -30,9 +55,35 @@ function mockResponse({ ok = true, status = 200, body = {} } = {}) {
     ok,
     status,
     json: async () => body,
-    text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
   };
 }
+
+describe('chat submissions', () => {
+  it('sends only one request when submitted again while the first is pending', async () => {
+    const document = createChatDocument();
+    const input = document.getElementById('chat-input');
+    input.value = 'Primer mensaje';
+    vi.stubGlobal('document', document);
+
+    let resolveFetch;
+    const fetchMock = vi.fn(() => new Promise((resolve) => {
+      resolveFetch = resolve;
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    initChat();
+
+    const form = document.getElementById('chat-form');
+    form.submit();
+    input.value = 'Segundo mensaje';
+    form.submit();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveFetch(mockResponse({ body: { reply: 'Respuesta' } }));
+    await vi.waitFor(() => expect(input.disabled).toBe(false));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('requestReply (fetch mockeado)', () => {
   it('envía el historial por POST y devuelve la respuesta', async () => {
@@ -55,29 +106,21 @@ describe('requestReply (fetch mockeado)', () => {
     await expect(requestReply(history, fetchMock)).rejects.toThrow('Gemini caído');
   });
 
-  it('lee la respuesta en streaming y notifica los fragmentos recibidos', async () => {
-    const encoder = new TextEncoder();
-    const chunks = ['Ele', 'mental.'];
-    let index = 0;
+  it('lee el JSON de respuesta aunque el body HTTP exponga un lector', async () => {
+    const getReader = vi.fn();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      body: {
-        getReader: () => ({
-          read: async () => (
-            index < chunks.length
-              ? { done: false, value: encoder.encode(chunks[index++]) }
-              : { done: true }
-          ),
-        }),
-      },
+      body: { getReader },
+      json: async () => ({ reply: 'Elemental.' }),
     });
     const received = [];
 
     const reply = await requestReply(history, fetchMock, (chunk, full) => received.push([chunk, full]));
 
     expect(reply).toBe('Elemental.');
-    expect(received).toEqual([['Ele', 'Ele'], ['mental.', 'Elemental.']]);
+    expect(received).toEqual([['Elemental.', 'Elemental.']]);
+    expect(getReader).not.toHaveBeenCalled();
   });
 
   it('no repite automáticamente una solicitud cuando el servidor responde 503', async () => {
@@ -99,9 +142,8 @@ describe('requestReply (fetch mockeado)', () => {
     await expect(requestReply(history, fetchMock)).rejects.toThrow(/no devolvió respuesta/i);
   });
 
-  it('acepta texto plano como respuesta de respaldo', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse({ body: 'Respuesta en texto plano.' }));
-
-    await expect(requestReply(history, fetchMock)).resolves.toBe('Respuesta en texto plano.');
+  it('rechaza JSON exitoso sin el campo reply', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockResponse({ body: {} }));
+    await expect(requestReply(history, fetchMock)).rejects.toThrow(/no devolvió respuesta/i);
   });
 });

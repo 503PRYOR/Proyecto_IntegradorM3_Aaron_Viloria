@@ -2,21 +2,8 @@ import { formatTime } from './utils.js';
 
 const GREETING =
   'Pase, pase. Veo que viene con prisa y con una pregunta. Hable, y sea breve: el tiempo es un recurso escaso.';
-const SEND_DEBOUNCE_MS = 250;
 
-export function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
-}
-
-/**
- * Llama a la serverless function y lee la respuesta en streaming.
- * onToken(chunk, textoAcumulado) se invoca por cada fragmento.
- * Devuelve el texto completo. Lanza Error si no llegó nada utilizable.
- */
+/** Llama a la función serverless y devuelve el texto de su respuesta JSON. */
 export async function requestReply(messages, fetchFn = fetch, onToken = () => {}) {
   const request = {
     method: 'POST',
@@ -24,49 +11,22 @@ export async function requestReply(messages, fetchFn = fetch, onToken = () => {}
     body: JSON.stringify({ messages: messages.map(({ role, text }) => ({ role, text })) }),
   };
   const response = await fetchFn('/api/functions', request);
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('El servidor devolvió una respuesta inválida.');
+  }
 
-  // Errores: el servidor los envía como JSON { error }
   if (!response.ok) {
-    const data = await response.json().catch(() => null);
     throw new Error(data?.error || `Error del servidor (${response.status}).`);
   }
 
-  // Respuesta en streaming (texto plano)
-  if (response.body?.getReader) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let full = '';
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        if (!chunk) continue;
-        full += chunk;
-        onToken(chunk, full);
-      }
-    } catch (error) {
-      // Si se cortó a mitad pero ya había texto, conservamos lo recibido
-      if (!full.trim()) throw error;
-    }
-    if (!full.trim()) throw new Error('El personaje no devolvió respuesta. Intenta de nuevo.');
-    return full;
+  if (typeof data?.reply !== 'string' || !data.reply.trim()) {
+    throw new Error('El personaje no devolvió respuesta. Intenta de nuevo.');
   }
-
-  // Respaldo (por ejemplo, en pruebas): JSON { reply } o texto plano
-  const raw = await response.text();
-  try {
-    const data = JSON.parse(raw);
-    if (typeof data?.reply === 'string' && data.reply.trim()) {
-      onToken(data.reply, data.reply);
-      return data.reply;
-    }
-  } catch {
-    /* no era JSON: se trata como texto */
-  }
-  if (!raw.trim()) throw new Error('El personaje no devolvió respuesta. Intenta de nuevo.');
-  onToken(raw, raw);
-  return raw;
+  onToken(data.reply, data.reply);
+  return data.reply;
 }
 
 export function initChat() {
@@ -81,7 +41,7 @@ export function initChat() {
 
   // Historial en memoria: dura mientras no se recargue la página.
   const messages = [];
-  let loading = false;
+  let requestInFlight = false;
 
   function buildMessageElement(role, time) {
     const item = document.createElement('li');
@@ -112,7 +72,6 @@ export function initChat() {
   }
 
   function setLoading(value) {
-    loading = value;
     typing.hidden = !value;
     sendBtn.disabled = value;
     input.disabled = value;
@@ -130,6 +89,8 @@ export function initChat() {
   }
 
   async function askCharacter() {
+    if (requestInFlight) return;
+    requestInFlight = true;
     hideError();
     setLoading(true);
 
@@ -160,21 +121,22 @@ export function initChat() {
       }
     } finally {
       setLoading(false);
+      requestInFlight = false;
     }
   }
 
-  const sendMessage = debounce(() => {
+  function sendMessage() {
     const text = input.value.trim();
-    if (!text || loading) return;
+    if (!text || requestInFlight) return;
     input.value = '';
     input.style.height = '';
     addMessage('user', text);
     askCharacter();
-  }, SEND_DEBOUNCE_MS);
+  }
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    if (!input.value.trim() || loading) return;
+    if (!input.value.trim() || requestInFlight) return;
     sendMessage();
   });
 
@@ -192,7 +154,7 @@ export function initChat() {
   });
 
   retryBtn.addEventListener('click', () => {
-    if (!loading) askCharacter();
+    if (!requestInFlight) askCharacter();
   });
 
   addMessage('character', GREETING);
