@@ -4,14 +4,10 @@ import { SYSTEM_PROMPT } from '../lib/systemPrompt.js';
 import { toGeminiContents, validateMessages } from '../src/utils.js';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-// Modelos del entorno + respaldos actuales (sin repetir).
-const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite'];
-const fromEnv = (process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || '')
+const MODEL = (process.env.GEMINI_MODEL || process.env.GEMINI_MODELS || '')
   .split(',')
-  .map((m) => m.trim())
-  .filter(Boolean);
-const MODELS = [...new Set([...fromEnv, ...FALLBACK_MODELS])];
+  .map((model) => model.trim())
+  .find(Boolean) || 'gemini-3.6-flash';
 
 const BUSY = [429, 503];
 const MODEL_TIMEOUT_MS = 8000;
@@ -26,51 +22,46 @@ function generationConfig(model) {
   };
 }
 
-// Prueba cada modelo una vez para reservar tiempo para los respaldos.
+// Envía una sola solicitud para evitar multiplicar llamadas por los respaldos.
 async function openStream(messages) {
-  let lastStatus = 0;
-  let sawBusy = false;
+  try {
+    const response = await fetch(`${BASE}/${MODEL}:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: toGeminiContents(messages),
+        generationConfig: generationConfig(MODEL),
+      }),
+      signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+    });
 
-  for (const model of MODELS) {
-    try {
-      const response = await fetch(`${BASE}/${model}:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: toGeminiContents(messages),
-          generationConfig: generationConfig(model),
-        }),
-        signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
-      });
+    if (response.ok) return response;
 
-      if (response.ok) return response;
-
-      lastStatus = response.status;
-      if (BUSY.includes(response.status)) sawBusy = true;
-      const data = await response.json().catch(() => null);
-      const upstreamError = data?.error;
-      const errorDetails = `${upstreamError?.status || ''} ${upstreamError?.message || ''}`;
-      console.error(`Gemini ${model}:`, response.status, errorDetails);
-      if (response.status === 429 && /quota|billing|exceeded|resource_exhausted/i.test(errorDetails)) {
-        const quotaError = new Error('Gemini quota exceeded');
-        quotaError.status = 429;
-        quotaError.quota = true;
-        throw quotaError;
-      }
-    } catch (err) {
-      if (err.quota) throw err;
-      if (err.name === 'TimeoutError' || err.name === 'AbortError') sawBusy = true;
-      console.error(`Gemini ${model} falló:`, err.message);
+    const data = await response.json().catch(() => null);
+    const upstreamError = data?.error;
+    const errorDetails = `${upstreamError?.status || ''} ${upstreamError?.message || ''}`;
+    console.error(`Gemini ${MODEL}:`, response.status, errorDetails);
+    if (response.status === 429 && /quota|billing|exceeded|resource_exhausted/i.test(errorDetails)) {
+      const quotaError = new Error('Gemini quota exceeded');
+      quotaError.status = 429;
+      quotaError.quota = true;
+      throw quotaError;
     }
-  }
 
-  const error = new Error('Gemini no disponible');
-  error.status = lastStatus;
-  error.busy = sawBusy;
-  throw error;
+    const error = new Error('Gemini no disponible');
+    error.status = response.status;
+    error.busy = BUSY.includes(response.status);
+    throw error;
+  } catch (err) {
+    if (err.quota || err.status) throw err;
+    const error = new Error('Gemini no disponible');
+    error.busy = err.name === 'TimeoutError' || err.name === 'AbortError';
+    console.error(`Gemini ${MODEL} falló:`, err.message);
+    throw error;
+  }
 }
 
 // Convierte el stream SSE de Gemini en fragmentos de texto

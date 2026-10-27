@@ -78,44 +78,26 @@ describe('API handler', () => {
 
     expect(res.statusCode).toBe(503);
     expect(res.body.error).toMatch(/muy ocupado/i);
+    expect(fetch).toHaveBeenCalledTimes(1);
     const [, request] = fetch.mock.calls[0];
     const payload = JSON.parse(request.body);
     expect(payload.generationConfig.maxOutputTokens).toBe(1024);
     expect(payload.generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'LOW' });
   });
 
-  it('usa un modelo de respaldo si el configurado no está disponible', async () => {
-    fetch
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        json: async () => ({ error: { message: 'Model not found' } }),
-      })
-      .mockResolvedValueOnce(createGeminiStream('Respuesta de respaldo'));
+  it('no prueba otros modelos si el configurado no está disponible', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ error: { message: 'Model not found' } }),
+    });
     const res = createResponse();
 
     await handler({ method: 'POST', body: { messages: [{ role: 'user', text: 'Hola' }] } }, res);
 
-    expect(res.body).toBe('Respuesta de respaldo');
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch.mock.calls[1][0]).toContain('gemini-3.6-flash');
-  });
-
-  it('pasa a un modelo de respaldo si el principal está temporalmente ocupado', async () => {
-    fetch
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 503,
-        json: async () => ({ error: { message: 'High demand' } }),
-      })
-      .mockResolvedValueOnce(createGeminiStream('Respuesta de respaldo'));
-    const res = createResponse();
-
-    await handler({ method: 'POST', body: { messages: [{ role: 'user', text: 'Hola' }] } }, res);
-
-    expect(res.body).toBe('Respuesta de respaldo');
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch.mock.calls[1][0]).toContain('gemini-3.6-flash');
+    expect(res.statusCode).toBe(502);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0][0]).toContain('gemini-3.8-flash');
   });
 
   it('explains when Gemini exhausted the quota without trying fallback models', async () => {
