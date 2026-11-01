@@ -3,13 +3,13 @@
 Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsada por **Google Gemini**. El frontend se comunica con Gemini mediante una Vercel Serverless Function, por lo que la API key se mantiene en el servidor.
 
 - **Demo en producción:** <https://proyecto-integradorm3.vercel.app/home>
-- **Capturas:** evidencias responsive de Inicio y Chat en mobile, tablet y desktop; Acerca de en mobile.
+- **Capturas:** Inicio, Chat y “Acerca de” en mobile, tablet y desktop.
 
 | Vista | Mobile | Tablet | Desktop |
 |---|---|---|---|
 | Inicio | ![Inicio en mobile](./screenshots/inicio-mobile.png) | ![Inicio en tablet](./screenshots/inicio-tablet.png) | ![Inicio en desktop](./screenshots/inicio-desktop.png) |
 | Chat | ![Chat en mobile](./screenshots/chat-mobile.png) | ![Chat en tablet](./screenshots/chat-tablet.png) | ![Chat en desktop](./screenshots/chat-desktop.png) |
-| Acerca de | ![Acerca de en mobile](./screenshots/acerca-de-mobile.png) | — | — |
+| Acerca de | ![Acerca de en mobile](./screenshots/acerca-de-mobile.png) | ![Acerca de en tablet](./screenshots/acerca-de-tablet.png) | ![Acerca de en desktop](./screenshots/acerca-de-desktop.png) |
 
 ## Funcionalidades
 
