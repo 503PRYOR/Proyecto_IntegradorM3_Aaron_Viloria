@@ -59,7 +59,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reply = await generateReply(messages.slice(-10));
+    const reply = await generateReply(messages);
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({ reply });
