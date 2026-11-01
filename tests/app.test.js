@@ -59,6 +59,18 @@ function mockResponse({ ok = true, status = 200, body = {} } = {}) {
 }
 
 describe('chat submissions', () => {
+  it('starts with an empty conversation and waits for the user', () => {
+    const document = createChatDocument();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('document', document);
+    vi.stubGlobal('fetch', fetchMock);
+
+    initChat();
+
+    expect(document.getElementById('messages').children).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends only one request when submitted again while the first is pending', async () => {
     const document = createChatDocument();
     const input = document.getElementById('chat-input');

@@ -1,8 +1,5 @@
 import { formatTime } from './utils.js';
 
-const GREETING =
-  'Pase, pase. Veo que viene con prisa y con una pregunta. Hable, y sea breve: el tiempo es un recurso escaso.';
-
 /** Llama a la función serverless y devuelve el texto de su respuesta JSON. */
 export async function requestReply(messages, fetchFn = fetch, onToken = () => {}) {
   const request = {
@@ -156,6 +153,4 @@ export function initChat() {
   retryBtn.addEventListener('click', () => {
     if (!requestInFlight) askCharacter();
   });
-
-  addMessage('character', GREETING);
 }
