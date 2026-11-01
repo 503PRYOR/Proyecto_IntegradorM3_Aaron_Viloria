@@ -52,32 +52,6 @@ export function initChat() {
     stamp.textContent = `${role === 'user' ? 'Tú' : 'Nikola'} · ${time}`;
 
     if (role === 'character') {
-      const avatar = document.createElement('span');
-      avatar.className = 'plasma-avatar';
-      avatar.setAttribute('aria-hidden', 'true');
-      avatar.innerHTML = `
-        <svg viewBox="0 0 160 160" focusable="false">
-          <g class="plasma-rays plasma-rays--one">
-            <path d="M80 80 75 69 70 61 72 51 65 43 63 31m7 30-9-3-7-8-10-2m18 3 9-10 2-10 8-8"/>
-            <path d="M80 80 91 73 99 65 110 63 119 54 130 51m-20 12 2 10 8 6 3 12m-24-26 4-11-3-9 5-11"/>
-            <path d="M80 80 72 91 64 98 62 109 53 116 48 129m14-20-10 1-7 8-11 2m30-22-10-2-8 4-11-3"/>
-            <path d="M80 80 88 91 96 98 101 109 111 114 117 126m-16-17 10 1 7 7 12 1m-34-20 10-3 7 4 11-2"/>
-          </g>
-          <g class="plasma-rays plasma-rays--two">
-            <path d="M80 80 79 66 84 57 81 47 87 39 85 28m-1 29 10-4 5-8 10-4"/>
-            <path d="M80 80 67 78 57 72 47 74 38 68 27 67m20 7-5-9-9-4-4-10"/>
-            <path d="M80 80 91 82 101 77 112 80 121 74 133 74m-21 6 5 9 10 4 4 10"/>
-            <path d="M80 80 75 94 78 104 72 114 75 124 69 135m9-31-9 5-3 10-9 6"/>
-          </g>
-          <circle class="plasma-core-glow" cx="80" cy="80" r="20"/>
-          <circle class="plasma-core" cx="80" cy="80" r="4"/>
-          <circle cx="80" cy="80" r="1.5" fill="#fff"/>
-        </svg>`;
-
-      const content = document.createElement('div');
-      content.className = 'msg__bubble';
-      content.append(bubble, stamp);
-
       const copyButton = document.createElement('button');
       copyButton.className = 'msg__copy';
       copyButton.type = 'button';
@@ -92,8 +66,7 @@ export function initChat() {
           copyButton.textContent = 'No se pudo copiar';
         }
       });
-      content.append(copyButton);
-      item.append(avatar, content);
+      item.append(bubble, stamp, copyButton);
     } else {
       item.append(bubble, stamp);
     }

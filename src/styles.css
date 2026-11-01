@@ -226,7 +226,7 @@ p {
   flex: 1;
   min-height: 0;
   margin: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.25rem;
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -259,81 +259,6 @@ p {
   border-bottom-right-radius: 0.25rem;
 }
 
-.messages > li.msg--character {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  max-width: 100%;
-  padding: 0;
-  overflow: visible;
-  background: transparent;
-  border: 0;
-  white-space: normal;
-}
-
-.plasma-avatar {
-  display: block;
-  flex: 0 0 3.75rem;
-  width: 3.75rem;
-  height: 3.75rem;
-  margin-top: 0.2rem;
-  overflow: hidden;
-  border: 1px solid rgb(244 200 255 / 78%);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, rgb(255 114 225 / 48%), transparent 52%),
-    radial-gradient(circle at 38% 30%, #684184, #261936 58%, #090a17);
-  box-shadow: 0 0 16px rgb(218 98 255 / 72%), inset 0 0 10px #090a17;
-}
-
-.plasma-avatar svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 2px #ff9eff) drop-shadow(0 0 4px #bf70ff);
-}
-
-.plasma-rays {
-  fill: none;
-  stroke: #ff9eff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.2;
-  animation: plasma-flicker 1.7s steps(1, end) infinite;
-}
-
-.plasma-rays--two {
-  stroke: #ff5ec4;
-  stroke-width: 2.4;
-  animation-duration: 1.15s;
-  animation-delay: -0.5s;
-}
-
-.plasma-core-glow {
-  fill: #ff72e1;
-  filter: blur(6px);
-  opacity: 0.9;
-}
-
-.plasma-core {
-  fill: #fff;
-  filter: drop-shadow(0 0 4px #fff0ff);
-  animation: plasma-core-pulse 1.4s ease-in-out infinite alternate;
-}
-
-.msg__bubble {
-  min-width: 0;
-  max-width: calc(100% - 4.5rem);
-  padding: 0.7rem 1rem;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  border-bottom-left-radius: 0.25rem;
-}
-
 .msg__text {
   margin: 0;
   color: var(--text);
@@ -344,19 +269,6 @@ p {
   margin-top: 0.35rem;
   color: var(--muted);
   font-size: 0.75rem;
-}
-
-@keyframes plasma-flicker {
-  0%, 8%, 12%, 38%, 42%, 71%, 100% { opacity: 0.95; }
-  9%, 39%, 72% { opacity: 0.45; }
-  10%, 40%, 73% { opacity: 0.75; }
-  55%, 58% { opacity: 0.4; }
-  56%, 59% { opacity: 1; }
-}
-
-@keyframes plasma-core-pulse {
-  from { opacity: 0.78; }
-  to { opacity: 1; }
 }
 
 .msg__copy {
@@ -610,11 +522,6 @@ p {
   .typing__dots i {
     animation: none;
     opacity: 0.7;
-  }
-
-  .plasma-rays,
-  .plasma-core {
-    animation: none;
   }
 
   * {
