@@ -3,14 +3,20 @@
 Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsada por **Google Gemini**. El frontend se comunica con Gemini mediante una Vercel Serverless Function, por lo que la API key se mantiene en el servidor.
 
 - **Demo en producción:** <https://proyecto-integradorm3.vercel.app/home>
-- **Capturas:** pendientes de agregar capturas de las vistas en mobile, tablet y desktop.
+- **Capturas:** evidencias responsive de Inicio y Chat en mobile, tablet y desktop; Acerca de en mobile.
+
+| Vista | Mobile | Tablet | Desktop |
+|---|---|---|---|
+| Inicio | ![Inicio en mobile](./screenshots/inicio-mobile.png) | ![Inicio en tablet](./screenshots/inicio-tablet.png) | ![Inicio en desktop](./screenshots/inicio-desktop.png) |
+| Chat | ![Chat en mobile](./screenshots/chat-mobile.png) | ![Chat en tablet](./screenshots/chat-tablet.png) | ![Chat en desktop](./screenshots/chat-desktop.png) |
+| Acerca de | ![Acerca de en mobile](./screenshots/acerca-de-mobile.png) | — | — |
 
 ## Funcionalidades
 
 - Navegación SPA con History API en `/home`, `/chat` y `/about`, incluyendo atrás/adelante.
 - Diseño mobile-first con Flexbox y breakpoints para tablet (768 px) y escritorio (1100 px).
 - Chat con historial durante la sesión, copia de respuestas, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
-- Cada solicitud envía hasta los 10 mensajes más recientes como contexto.
+- Cada solicitud envía el historial completo disponible de la conversación como contexto, con un máximo validado de 50 mensajes por solicitud.
 - System prompt de Nikola Tesla definido en el servidor.
 - Una llamada a `generateContent` por envío, con respuesta JSON completa y el modelo `gemini-3.5-flash-lite`; no hay reintentos ni modelos de respaldo automáticos.
 - Validación del método y de los mensajes recibidos por la función serverless.
@@ -102,8 +108,10 @@ npm run test:watch
 
 ## Uso de IA en el desarrollo
 
-Completa esta tabla con los prompts que utilizaste y las decisiones que tomaste durante el desarrollo:
+La siguiente tabla resume algunos prompts utilizados durante el desarrollo y las decisiones tomadas a partir de ellos:
 
 | Prompt utilizado | Cómo influyó en la implementación | Decisión que tomé |
 |---|---|---|
-| _Completar con un prompt utilizado_ | _Describir su influencia_ | _Describir la decisión propia_ |
+| “Haz que al abrir el chat primero uno deba escribir y luego el chat responda.” | Se eliminó el saludo inicial para que la conversación comience cuando la persona envía su primer mensaje. | Mantener la vista inicial vacía y mostrar la respuesta solo después del primer envío. |
+| “Agrega un botón para copiar las respuestas del personaje.” | Se incorporó una acción de copiado en cada respuesta de Nikola, con confirmación visual de éxito o error. | Ubicar la acción junto a cada respuesta y conservar el texto de la conversación sin cambios. |
+| “¿Cómo puedo mejorar el contexto de la conversación?” | Se revisó el flujo de mensajes y se quitó el recorte que enviaba solo los últimos diez. | Enviar todo el historial disponible a Gemini y conservar el límite de validación de 50 mensajes por solicitud. |
