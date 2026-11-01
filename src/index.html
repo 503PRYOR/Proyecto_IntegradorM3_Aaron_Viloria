@@ -50,7 +50,11 @@
       <form id="chat-form" class="composer" autocomplete="off">
         <label for="chat-input" class="sr-only">Tu mensaje</label>
         <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Escribe tu mensaje"></textarea>
-        <button id="send-btn" class="button" type="submit">Enviar</button>
+        <button id="send-btn" class="button" type="submit" aria-label="Enviar mensaje">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22">
+            <path fill="currentColor" d="M13.2 2 5.5 13h5.3L10 22l8.5-12h-5.7L13.2 2Z" />
+          </svg>
+        </button>
       </form>
     </section>
 
