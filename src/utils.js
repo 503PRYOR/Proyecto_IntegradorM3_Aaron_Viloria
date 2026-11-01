@@ -1,6 +1,5 @@
 // Funciones puras y reutilizables (frontend y serverless function).
 
-export const MAX_MESSAGES = 50;
 export const MAX_TEXT_LENGTH = 2000;
 
 const ROUTES = {
@@ -61,9 +60,6 @@ export function parseGeminiResponse(data) {
 export function validateMessages(messages) {
   if (!Array.isArray(messages) || messages.length === 0) {
     return { ok: false, error: 'Debes enviar un arreglo "messages" no vacío.' };
-  }
-  if (messages.length > MAX_MESSAGES) {
-    return { ok: false, error: `Máximo ${MAX_MESSAGES} mensajes por conversación.` };
   }
   for (const m of messages) {
     const validRole = m && (m.role === 'user' || m.role === 'character');

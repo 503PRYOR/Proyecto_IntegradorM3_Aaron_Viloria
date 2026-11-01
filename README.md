@@ -16,7 +16,7 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 - Navegación SPA con History API en `/home`, `/chat` y `/about`, incluyendo atrás/adelante.
 - Diseño mobile-first con Flexbox y breakpoints para tablet (768 px) y escritorio (1100 px).
 - Chat con historial durante la sesión, copia de respuestas, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
-- Cada solicitud envía el historial completo disponible de la conversación como contexto, con un máximo validado de 50 mensajes por solicitud.
+- Cada solicitud envía el historial completo disponible de la conversación como contexto, sin límite de cantidad de mensajes; cada mensaje admite hasta 2.000 caracteres. Gemini puede rechazar solicitudes que excedan su ventana de contexto.
 - System prompt de Nikola Tesla definido en el servidor.
 - Una llamada a `generateContent` por envío, con respuesta JSON completa y el modelo `gemini-3.5-flash-lite`; no hay reintentos ni modelos de respaldo automáticos.
 - Validación del método y de los mensajes recibidos por la función serverless.
@@ -114,4 +114,4 @@ La siguiente tabla resume algunos prompts utilizados durante el desarrollo y las
 |---|---|---|
 | “Haz que al abrir el chat primero uno deba escribir y luego el chat responda.” | Se eliminó el saludo inicial para que la conversación comience cuando la persona envía su primer mensaje. | Mantener la vista inicial vacía y mostrar la respuesta solo después del primer envío. |
 | “Agrega un botón para copiar las respuestas del personaje.” | Se incorporó una acción de copiado en cada respuesta de Nikola, con confirmación visual de éxito o error. | Ubicar la acción junto a cada respuesta y conservar el texto de la conversación sin cambios. |
-| “¿Cómo puedo mejorar el contexto de la conversación?” | Se revisó el flujo de mensajes y se quitó el recorte que enviaba solo los últimos diez. | Enviar todo el historial disponible a Gemini y conservar el límite de validación de 50 mensajes por solicitud. |
+| “¿Cómo puedo mejorar el contexto de la conversación?” | Se revisó el flujo de mensajes y se eliminaron los límites de cantidad que impedían enviar el historial completo. | Enviar todo el historial disponible a Gemini, conservar el límite de 2.000 caracteres por mensaje y considerar la ventana de contexto del modelo. |

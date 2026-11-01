@@ -56,6 +56,15 @@ describe('validateMessages', () => {
     expect(validateMessages([{ role: 'user', text: 'Hola' }]).ok).toBe(true);
   });
 
+  it('acepta conversaciones de más de 50 mensajes', () => {
+    const messages = Array.from({ length: 51 }, (_, index) => ({
+      role: index === 50 ? 'user' : index % 2 === 0 ? 'user' : 'character',
+      text: `Mensaje ${index + 1}`,
+    }));
+
+    expect(validateMessages(messages).ok).toBe(true);
+  });
+
   it('rechaza arreglos vacíos, roles inválidos y último mensaje del personaje', () => {
     expect(validateMessages([]).ok).toBe(false);
     expect(validateMessages([{ role: 'admin', text: 'x' }]).ok).toBe(false);
