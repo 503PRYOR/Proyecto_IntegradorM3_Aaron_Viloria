@@ -117,7 +117,12 @@ describe('chat submissions', () => {
     await vi.waitFor(() => expect(input.disabled).toBe(false));
 
     const characterMessage = document.getElementById('messages').children[1];
-    const copyButton = characterMessage.children.find((child) => child.tagName === 'button');
+    const [avatar, bubble] = characterMessage.children;
+    const copyButton = bubble.children.find((child) => child.tagName === 'button');
+
+    expect(avatar.className).toBe('plasma-avatar');
+    expect(avatar.innerHTML).toContain('plasma-rays');
+
     await copyButton.click();
 
     expect(writeText).toHaveBeenCalledWith('La ciencia avanza.');

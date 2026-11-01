@@ -9,7 +9,7 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 
 - Navegación SPA con History API en `/home`, `/chat` y `/about`, incluyendo atrás/adelante.
 - Diseño mobile-first con Flexbox y breakpoints para tablet (768 px) y escritorio (1100 px).
-- Chat con historial durante la sesión, copia de respuestas, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
+- Chat con historial durante la sesión, avatar de plasma animado, copia de respuestas, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
 - Cada solicitud envía hasta los 10 mensajes más recientes como contexto.
 - System prompt de Nikola Tesla definido en el servidor.
 - Una llamada a `generateContent` por envío, con respuesta JSON completa y el modelo `gemini-3.5-flash-lite`; no hay reintentos ni modelos de respaldo automáticos.
