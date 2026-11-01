@@ -3,7 +3,7 @@ import { initChat, requestReply } from '../src/chat.js';
 
 const history = [{ role: 'user', text: 'Hola', time: '10:00' }];
 
-function createElement() {
+function createElement(tagName = 'div') {
   const listeners = {};
   return {
     children: [],
@@ -13,6 +13,7 @@ function createElement() {
     scrollTop: 0,
     style: {},
     textContent: '',
+    tagName,
     value: '',
     addEventListener(type, callback) {
       listeners[type] = callback;
@@ -20,7 +21,11 @@ function createElement() {
     append(...children) {
       this.children.push(...children);
     },
+    setAttribute() {},
     focus() {},
+    async click() {
+      await listeners.click();
+    },
     submit() {
       listeners.submit({ preventDefault() {} });
     },
@@ -41,7 +46,7 @@ function createChatDocument() {
   return {
     elements,
     getElementById: (id) => elements.get(id),
-    createElement,
+    createElement: (tagName) => createElement(tagName),
   };
 }
 
@@ -94,6 +99,29 @@ describe('chat submissions', () => {
     resolveFetch(mockResponse({ body: { reply: 'Respuesta' } }));
     await vi.waitFor(() => expect(input.disabled).toBe(false));
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the user copy a character reply', async () => {
+    const document = createChatDocument();
+    const input = document.getElementById('chat-input');
+    input.value = '¿Cómo está?';
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('document', document);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      mockResponse({ body: { reply: 'La ciencia avanza.' } }),
+    ));
+    initChat();
+
+    document.getElementById('chat-form').submit();
+    await vi.waitFor(() => expect(input.disabled).toBe(false));
+
+    const characterMessage = document.getElementById('messages').children[1];
+    const copyButton = characterMessage.children.find((child) => child.tagName === 'button');
+    await copyButton.click();
+
+    expect(writeText).toHaveBeenCalledWith('La ciencia avanza.');
+    expect(copyButton.textContent).toBe('Copiado');
   });
 });
 

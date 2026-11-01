@@ -52,6 +52,24 @@ export function initChat() {
     stamp.textContent = `${role === 'user' ? 'Tú' : 'Nikola'} · ${time}`;
 
     item.append(bubble, stamp);
+    if (role === 'character') {
+      const copyButton = document.createElement('button');
+      copyButton.className = 'msg__copy';
+      copyButton.type = 'button';
+      copyButton.textContent = 'Copiar';
+      copyButton.setAttribute('aria-label', 'Copiar respuesta de Nikola');
+      copyButton.addEventListener('click', async () => {
+        copyButton.textContent = 'Copiando...';
+        try {
+          await navigator.clipboard.writeText(bubble.textContent);
+          copyButton.textContent = 'Copiado';
+        } catch {
+          copyButton.textContent = 'No se pudo copiar';
+        }
+      });
+      item.append(copyButton);
+    }
+
     list.append(item);
     return bubble;
   }

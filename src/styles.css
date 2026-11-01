@@ -259,6 +259,24 @@ p {
   border-bottom-right-radius: 0.25rem;
 }
 
+.msg__copy {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.msg__copy:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .typing {
   margin: 0;
   color: var(--muted);
