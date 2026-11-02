@@ -1,5 +1,6 @@
 import { resolveRoute } from './utils.js';
 import { initChat } from './chat.js';
+import { initTheme } from './theme.js';
 
 // Actualizado con el nuevo nombre del proyecto/personaje
 const TITLES = {
@@ -50,4 +51,5 @@ window.addEventListener('popstate', () => {
 
 // Render inicial según la URL actual (normaliza "/" y rutas desconocidas).
 navigate(location.pathname, { replace: true });
+initTheme();
 initChat();

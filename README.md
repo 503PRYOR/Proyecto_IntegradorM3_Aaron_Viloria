@@ -14,6 +14,7 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 ## Funcionalidades
 
 - Navegación SPA con History API en `/home`, `/chat` y `/about`, incluyendo atrás/adelante.
+- Selector de modo claro/oscuro con icono de bombilla, manteniendo la paleta violeta y cian y recordando la preferencia en el navegador.
 - Diseño mobile-first con Flexbox y breakpoints para tablet (768 px) y escritorio (1100 px).
 - Chat con historial durante la sesión, copia de respuestas, scroll automático, indicador de escritura, manejo de errores y reintento, incluido un aviso específico cuando Gemini está temporalmente saturado.
 - Cada solicitud envía el historial completo disponible de la conversación como contexto, sin límite de cantidad de mensajes; cada mensaje admite hasta 2.000 caracteres. Gemini puede rechazar solicitudes que excedan su ventana de contexto.
@@ -34,11 +35,14 @@ Aplicación web de una sola página para conversar con **Nikola Tesla**, impulsa
 │   ├── styles.css
 │   ├── app.js             # Router SPA
 │   ├── chat.js            # Interfaz y lógica del chat
+│   ├── theme.js           # Selector y preferencia de tema
 │   └── utils.js           # Utilidades compartidas con la API
 ├── tests/
 │   ├── api.test.js        # Handler serverless y respuesta JSON de Gemini
 │   ├── app.test.js        # Lógica de respuesta del chat
+│   ├── theme.test.js      # Selector y persistencia de tema
 │   └── utils.test.js      # Rutas, validación y conversión a Gemini
+├── theme-preview.html     # Vista previa del selector de tema
 ├── .env.example
 ├── vercel.json
 └── package.json
