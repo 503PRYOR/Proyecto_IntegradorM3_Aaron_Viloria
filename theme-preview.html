@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vista previa · Tesla Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Young+Serif&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --surface: #131c2e;
+      --surface-2: #1a2540;
+      --line: #26334f;
+      --text: #e6ebf5;
+      --muted: #9aa8c4;
+      --accent: #8b7bff;
+      --accent-strong: #b8adff;
+      --cyan: #4cc9f0;
+      --magenta: #d16bff;
+      --font-body: "Instrument Sans", system-ui, sans-serif;
+      --font-display: "Young Serif", Georgia, serif;
+      --radius: 0.75rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font: 1rem/1.6 var(--font-body);
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    body.light {
+      color-scheme: light;
+      --bg: #f5f6fb;
+      --surface: #fff;
+      --surface-2: #eeeaff;
+      --line: #d9d7e8;
+      --text: #25233a;
+      --muted: #66647b;
+      --accent: #6853df;
+      --accent-strong: #5944d0;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem clamp(1rem, 4vw, 3rem);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      flex: 0 0 auto;
+      color: var(--accent-strong);
+      background: linear-gradient(90deg, var(--cyan), var(--accent) 50%, var(--magenta));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font: 1.25rem var(--font-display);
+      text-decoration: none;
+    }
+
+    nav { display: flex; align-items: center; gap: clamp(.6rem, 2vw, 1.25rem); }
+    nav a { color: var(--muted); text-decoration: none; }
+    nav a.active { color: var(--text); border-bottom: 2px solid var(--accent); }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--accent-strong);
+      cursor: pointer;
+      transition: color 150ms ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--cyan);
+    }
+
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 3px; }
+    .theme-toggle svg { width: 1.35rem; height: 1.35rem; }
+
+    main {
+      flex: 1;
+      width: min(100% - 2rem, 54rem);
+      margin: 0 auto;
+      padding: clamp(2rem, 7vh, 4rem) 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 .4rem;
+      color: var(--accent-strong);
+      font-size: .82rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font: clamp(2rem, 5vw, 2.8rem)/1.15 var(--font-display); }
+    .intro { margin: .55rem 0 2rem; color: var(--muted); }
+
+    .chat {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 18px 55px rgb(20 18 50 / 12%);
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .chat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .85rem 1rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .online { display: inline-flex; align-items: center; gap: .45rem; }
+    .online::before { width: .5rem; height: .5rem; border-radius: 50%; background: #64d6a0; content: ""; }
+    .messages { display: grid; gap: 1rem; padding: 1.3rem; }
+    .bubble { max-width: 82%; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+    .bubble.user { justify-self: end; border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--surface-2); }
+    .bubble p { margin: 0; }
+    .stamp { display: block; margin-top: .35rem; color: var(--muted); font-size: .75rem; }
+
+    .composer { display: flex; gap: .6rem; padding: 1rem; border-top: 1px solid var(--line); }
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      padding: .75rem .9rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .send {
+      width: 2.8rem;
+      height: 2.8rem;
+      border: 0;
+      border-radius: 50%;
+      background: radial-gradient(130% 230% at 50% 0%, #a58bff, #6a4cff 50%, #3f2ad0);
+      color: white;
+      font-size: 1.2rem;
+      box-shadow: 0 0 18px rgb(124 92 255 / 35%);
+    }
+
+    footer { padding: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; text-align: center; }
+
+    @media (max-width: 560px) {
+      .header { flex-wrap: wrap; }
+      nav { order: 2; width: 100%; justify-content: space-between; }
+      .theme-toggle { margin-left: auto; }
+      .bubble { max-width: 94%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="#">Bienvenido</a>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar a modo claro" aria-pressed="false">
+      <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 18h6m-5 3h4m-5.5-6.2A7 7 0 1 1 15.5 15c-.8.6-1.3 1.4-1.5 2h-4c-.2-.6-.7-1.4-1.5-2Z"></path>
+        <path d="m13.3 7.5-2 3h2l-1.2 3"></path>
+      </svg>
+    </button>
+    <nav aria-label="Principal">
+      <a href="#">Inicio</a>
+      <a href="#" class="active">Chat</a>
+      <a href="#">Acerca de</a>
+    </nav>
+  </header>
+  <main>
+    <p class="eyebrow">Vista previa del tema</p>
+    <h1>Conversa con Nikola Tesla</h1>
+    <p class="intro">El control cambia entre la paleta actual y su versión clara.</p>
+    <section class="chat" aria-label="Vista previa de conversación">
+      <div class="chat-head"><span>Conversación</span><span class="online">Nikola está disponible</span></div>
+      <div class="messages">
+        <div class="bubble user"><p>¿Qué te inspiró a experimentar con la electricidad?</p><span class="stamp">Tú · 10:42</span></div>
+        <div class="bubble"><p>La naturaleza siempre fue mi mejor laboratorio. Quería comprender sus fuerzas y encontrar maneras de ponerlas al servicio de todos.</p><span class="stamp">Nikola · 10:43</span></div>
+      </div>
+      <form class="composer"><input aria-label="Tu mensaje" placeholder="Escribe tu mensaje"><button class="send" type="button" aria-label="Enviar">➤</button></form>
+    </section>
+  </main>
+  <footer>Proyecto Integrador M3 · Aaron Viloria</footer>
+  <script>
+    const button = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-icon');
+    button.addEventListener('click', () => {
+      const isLight = document.body.classList.toggle('light');
+      button.setAttribute('aria-label', isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
+      button.setAttribute('aria-pressed', String(isLight));
+      icon.innerHTML = isLight
+        ? '<path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>'
+        : '<path d="M9 18h6m-5 3h4m-5.5-6.2A7 7 0 1 1 15.5 15c-.8.6-1.3 1.4-1.5 2h-4c-.2-.6-.7-1.4-1.5-2Z"></path><path d="m13.3 7.5-2 3h2l-1.2 3"></path>';
+    });
+  </script>
+</body>
+</html>
