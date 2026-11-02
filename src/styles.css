@@ -129,10 +129,10 @@ body[data-view="chat"] {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: var(--surface-2);
   color: var(--accent-strong);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.15s, background-color 0.15s;
 }
 
 .theme-toggle:hover {
@@ -141,8 +141,12 @@ body[data-view="chat"] {
 
 .theme-toggle svg {
   display: block;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.theme-toggle__moon {
+  fill: currentColor;
 }
 
 html[data-theme="light"] .theme-toggle__bulb,
