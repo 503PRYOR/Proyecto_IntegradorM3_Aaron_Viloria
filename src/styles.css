@@ -290,7 +290,6 @@ p {
   max-width: 85%;
   padding: 0.7rem 1rem;
   background: var(--surface);
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   border-bottom-left-radius: 0.25rem;
   overflow-wrap: anywhere;
@@ -303,7 +302,6 @@ p {
 .messages > li[data-role="user"] {
   align-self: flex-end;
   background: var(--surface-2);
-  border-color: var(--user-line);
   border-bottom-left-radius: var(--radius);
   border-bottom-right-radius: 0.25rem;
 }
@@ -408,7 +406,6 @@ p {
   align-items: flex-end;
   gap: 0.5rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--line);
 }
 
 #send-btn {
@@ -454,6 +451,10 @@ p {
   color: var(--muted);
   font-size: 0.85rem;
   text-align: center;
+}
+
+body[data-view="chat"] .site-footer {
+  border-top: 0;
 }
 
 /* ---------- Utilidades ---------- */
@@ -520,7 +521,6 @@ p {
     width: min(100%, 54rem);
     align-self: center;
     padding: 1rem 1.25rem;
-    border: 1px solid var(--line);
     border-radius: var(--radius);
     background: var(--surface);
   }
@@ -572,7 +572,7 @@ p {
 
   .view--chat:not([hidden]) {
     width: min(100%, 60rem);
-    padding: 1.5rem 2rem;
+    padding: 1.5rem 0;
   }
 
   .messages > li {
